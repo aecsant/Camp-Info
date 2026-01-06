@@ -1,0 +1,9 @@
+
+{
+  "appId": "com.campinfo.app",
+  "appName": "Camp Info",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

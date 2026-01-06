@@ -1,14 +1,30 @@
 
 import { Camp, Patient } from './types';
 
+const generateUUID = () => {
+  if (typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+};
+
 const STORAGE_KEYS = {
   CAMPS: 'camp_info_camps',
   PATIENTS: 'camp_info_patients',
 };
 
+const safeGet = (key: string) => {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    console.error("Storage error", e);
+    return null;
+  }
+};
+
 export const getCamps = (): Camp[] => {
-  const data = localStorage.getItem(STORAGE_KEYS.CAMPS);
-  return data ? JSON.parse(data) : [];
+  return safeGet(STORAGE_KEYS.CAMPS) || [];
 };
 
 export const saveCamp = (camp: Camp) => {
@@ -17,8 +33,7 @@ export const saveCamp = (camp: Camp) => {
 };
 
 export const getPatients = (campId?: string): Patient[] => {
-  const data = localStorage.getItem(STORAGE_KEYS.PATIENTS);
-  const allPatients: Patient[] = data ? JSON.parse(data) : [];
+  const allPatients: Patient[] = safeGet(STORAGE_KEYS.PATIENTS) || [];
   if (campId) {
     return allPatients.filter(p => p.campId === campId);
   }
@@ -41,3 +56,5 @@ export const deletePatient = (patientId: string) => {
     const filtered = patients.filter(p => p.id !== patientId);
     localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(filtered));
 };
+
+export { generateUUID };

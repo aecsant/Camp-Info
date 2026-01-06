@@ -1,4 +1,3 @@
-
 export interface Camp {
   id: string;
   serial: number;
@@ -15,7 +14,7 @@ export interface Patient {
   age: number;
   phone: string;
   addiction: string;
-  previousIllness: string;
+  previousIllness: string | string[];
   height: number;
   idealWeight: number;
   weight: number;
