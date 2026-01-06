@@ -1,0 +1,7 @@
+{
+  "name": "Camp Info",
+  "description": "A comprehensive medical camp management application for tracking camps and patient diagnostics with local data persistence and automated health remarks.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
