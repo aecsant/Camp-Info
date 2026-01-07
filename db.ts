@@ -32,6 +32,15 @@ export const saveCamp = (camp: Camp) => {
   localStorage.setItem(STORAGE_KEYS.CAMPS, JSON.stringify([...camps, camp]));
 };
 
+export const updateCamp = (updatedCamp: Camp) => {
+  const camps = getCamps();
+  const index = camps.findIndex(c => c.id === updatedCamp.id);
+  if (index >= 0) {
+    camps[index] = updatedCamp;
+    localStorage.setItem(STORAGE_KEYS.CAMPS, JSON.stringify(camps));
+  }
+};
+
 export const getPatients = (campId?: string): Patient[] => {
   const allPatients: Patient[] = safeGet(STORAGE_KEYS.PATIENTS) || [];
   if (campId) {

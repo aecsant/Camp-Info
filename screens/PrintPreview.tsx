@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Patient, Camp } from '../types';
 import { Share } from '@capacitor/share';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
 
 interface PrintPreviewProps {
   patient: Patient;
@@ -10,279 +11,444 @@ interface PrintPreviewProps {
 }
 
 const PrintPreview: React.FC<PrintPreviewProps> = ({ patient, camp, onClose }) => {
-  const slogan = "!! आरोग्य तपासणी करा वेळेवर - स्वस्थ तुम्ही रहाल आयुष्यभर !!";
+  const [showOptions, setShowOptions] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [loadingText, setLoadingText] = useState('');
+  const reportRef = useRef<HTMLDivElement>(null);
 
-  const handlePrint = async () => {
-    // On Android, sharing a formatted HTML file is the most reliable way to 
-    // trigger the native "Print" or "Save as PDF" menu.
-    const reportHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          body { font-family: sans-serif; padding: 20px; color: #333; line-height: 1.4; }
-          .container { border: 2px solid #000; padding: 25px; border-radius: 12px; max-width: 600px; margin: auto; }
-          .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
-          h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
-          .meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 12px; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-          .label { font-size: 10px; color: #666; text-transform: uppercase; font-weight: bold; display: block; }
-          .value { font-size: 15px; font-weight: bold; border-bottom: 1px solid #eee; display: block; padding-bottom: 3px; }
-          .vital-container { display: flex; gap: 15px; margin-top: 10px; }
-          .vital-box { flex: 1; border: 2px solid #2563eb; padding: 12px; border-radius: 10px; text-align: center; }
-          .vital-box.orange { border-color: #ea580c; }
-          .remark-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-top: 20px; }
-          .footer { margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
-          .officer-block { display: flex; flex-direction: column; align-items: center; }
-          .officer-text { font-size: 10px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; }
-          .officer-line { border-bottom: 1px solid #000; width: 140px; }
-          .slogan-final { text-align: center; margin-top: 20px; font-weight: bold; color: #000; font-size: 12px; border-top: 1px dashed #eee; padding-top: 10px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Medical Camp Report</h1>
-            <p style="margin: 5px 0;">${camp.name} • ${camp.date}</p>
-          </div>
-          
-          <div class="meta">
-            <span>Patient Serial: #${patient.serial}</span>
-            <span>Ref: ${patient.id.substring(0,8).toUpperCase()}</span>
-          </div>
+  const slogan = "|| आरोग्य तपासणी कराल वेळेवर स्वस्थ तुम्ही रहाल आयुष्यभर ||";
 
-          <div class="grid">
-            <div>
-              <span class="label">Patient Name</span>
-              <span class="value">${patient.name}</span>
-            </div>
-            <div>
-              <span class="label">Phone / Mobile</span>
-              <span class="value">${patient.phone}</span>
-            </div>
-            <div>
-              <span class="label">Age / Gender</span>
-              <span class="value">${patient.age}Y / ${patient.gender}</span>
-            </div>
-            <div>
-              <span class="label">BMI / Ideal Weight</span>
-              <span class="value">${patient.bmi} / ${patient.idealWeight}kg</span>
-            </div>
-          </div>
+  // Professional PDF margin: 18mm (top/bottom/left/right) - commonly used for reports
+  const pdfMargins = [14, 14, 14, 14];
 
-          <div class="vital-container">
-            <div class="vital-box">
-              <span class="label" style="color:#2563eb">Blood Pressure</span>
-              <div style="font-size: 22px; font-weight: 900;">${patient.bp}</div>
-              <span style="font-size: 8px; color: #2563eb;">mm of Hg</span>
-            </div>
-            <div class="vital-box orange">
-              <span class="label" style="color:#ea580c">Blood Glucose</span>
-              <div style="font-size: 22px; font-weight: 900;">${patient.glucose}</div>
-              <span style="font-size: 8px; color: #ea580c;">mg%</span>
-            </div>
-          </div>
+  const generatePdfBase64 = async (): Promise<string | null> => {
+    if (!reportRef.current) return null;
 
-          <div class="remark-box">
-            <span class="label">Diagnostic Remark / सल्ला</span>
-            <p style="margin: 8px 0 0 0; font-size: 14px; font-weight: bold; color: #1e293b;">${patient.remark}</p>
-          </div>
+    // @ts-ignore
+    if (typeof html2pdf === 'undefined') {
+      alert("PDF library (html2pdf) not loaded. Please check your internet connection.");
+      return null;
+    }
 
-          <div class="footer">
-            <div style="font-size: 8px; color: #999;">Printed on ${new Date().toLocaleDateString()}</div>
-            <div class="officer-block">
-                <span class="officer-text">Medical Officer</span>
-                <div class="officer-line"></div>
-            </div>
-          </div>
+    const element = reportRef.current;
 
-          <div class="slogan-final">
-            ${slogan}
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const fileName = `Report_${patient.name.replace(/[^a-z0-9]/gi, '_')}.html`;
+    // Use more professional margin (18mm, or 0.7 inch) for better output
+    const opt = {
+      margin: pdfMargins,
+      filename: `Report_${patient.name.replace(/[\\/:*?"<>|]/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 1,
+        useCORS: true,
+        logging: false,
+        letterRendering: true,
+        windowWidth: 680    // <--- ADJUSTED WIDTH TO max 680px
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
 
     try {
-      await Filesystem.writeFile({
-        path: fileName,
-        data: reportHtml,
-        directory: Directory.Cache,
-        encoding: Encoding.UTF8,
-      });
-
-      const uriResult = await Filesystem.getUri({
-        directory: Directory.Cache,
-        path: fileName,
-      });
-
-      // Android will show "Print" or "Save as PDF" when sharing an HTML file
-      await Share.share({
-        title: `Medical Report: ${patient.name}`,
-        url: uriResult.uri,
-        dialogTitle: 'Select Print or Save as PDF',
-      });
+      // @ts-ignore
+      const pdfDataUri = await html2pdf().from(element).set(opt).outputPdf('datauristring');
+      if (!pdfDataUri) return null;
+      return pdfDataUri.split(',')[1];
     } catch (err) {
-      console.error("Print flow failed", err);
-      // Fallback to basic text share if filesystem fails
-      handleShare();
+      console.error("PDF generation error:", err);
+      return null;
     }
   };
 
-  const handleShare = async () => {
+  const handlePrintAction = async () => {
+    setShowOptions(false);
+
+    if (Capacitor.isNativePlatform()) {
+      setIsProcessing(true);
+      setLoadingText('Preparing Print...');
+
+      const base64Data = await generatePdfBase64();
+      if (base64Data) {
+        try {
+          const fileName = `Print_${Date.now()}.pdf`;
+          await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache,
+          });
+
+          const uriResult = await Filesystem.getUri({
+            directory: Directory.Cache,
+            path: fileName,
+          });
+
+          await Share.share({
+            title: `Print: ${patient.name}`,
+            files: [uriResult.uri],
+            dialogTitle: 'Select a Print Service or App',
+          });
+        } catch (e) {
+          console.error("Native print flow failed:", e);
+          alert("Error opening print menu. Please try 'Save as PDF' instead.");
+        }
+      } else {
+        alert("Could not generate report document.");
+      }
+      setIsProcessing(false);
+    } else {
+      window.print();
+    }
+  };
+
+  const handleSaveAsPDF = async () => {
+    setShowOptions(false);
+    setIsProcessing(true);
+    setLoadingText('Generating PDF...');
+
+    if (!reportRef.current) {
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const base64Data = await generatePdfBase64();
+        if (base64Data) {
+          const safeName = patient.name.replace(/[^\p{L}\p{N}]/gu, '_');
+          const fileName = `Report_${safeName}_${Date.now()}.pdf`;
+
+          await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache,
+          });
+
+          const uriResult = await Filesystem.getUri({
+            directory: Directory.Cache,
+            path: fileName,
+          });
+
+          await Share.share({
+            title: `Save PDF: ${patient.name}`,
+            files: [uriResult.uri],
+            dialogTitle: 'Save or Send PDF अहवाल (Report)',
+          });
+        }
+      } else {
+        // Professional (18mm) margin for PDF download
+        const opt = {
+          margin: pdfMargins,
+          filename: `Report_${patient.name.replace(/[^\p{L}\p{N}]/gu, '_')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: {
+            scale: 1,
+            windowWidth: 680 // <--- ADJUSTED WIDTH TO max 680px
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        // @ts-ignore
+        await html2pdf().from(reportRef.current).set(opt).save();
+      }
+    } catch (err) {
+      console.error("PDF process failed:", err);
+      alert("Failed to generate PDF.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleShareText = async () => {
     const reportText = `
-🏥 MEDICAL CAMP REPORT
+🏥 स्वयम् आरोग्य (आरोग्य शिबिर)
 -----------------------
-CAMP: ${camp.name}
-DATE: ${camp.date}
-SERIAL NO: ${patient.serial}
+शिबिर क्रमांक (Camp Number): ${camp.serial}
+संस्थेचे नाव (Organization Name): ${camp.organizationName}
+शिबिराचे ठिकाण (Camp location): ${camp.name}
+दिनांक (Date): ${new Date(camp.date).toLocaleDateString('en-GB')}
 
-PATIENT DETAILS:
-- Name: ${patient.name}
-- Age/Sex: ${patient.age} / ${patient.gender}
-- Phone: ${patient.phone}
+नोंदणी क्रमांक (Serial Number): ${patient.serial}
+नाव (Name): ${patient.name}
+लिंग (Gender): ${patient.gender === 'Male' ? 'पुरुष' : 'महिला'}
+वय (Age): ${patient.age} वर्ष
+मोबाईल क्र. (Mobile Number): ${patient.phone}
+${Array.isArray(patient.previousIllness) && patient.previousIllness[0] !== 'None'
+  ? `पूर्वीचे आजार (Previous Illness): ${Array.isArray(patient.previousIllness)
+    ? patient.previousIllness.slice(0, 2).map((illness) => {
+        if (illness === "Diabetes") return "मधुमेह";
+        if (illness === "Hypertension") return "रक्तदाब";
+        return illness;
+      }).join(', ')
+    : (
+      patient.previousIllness === "Diabetes"
+        ? "मधुमेह"
+        : patient.previousIllness === "Hypertension"
+          ? "रक्तदाब"
+          : patient.previousIllness
+    )}`
+  : ''}
 
-VITALS:
-- BP: ${patient.bp}
-- Glucose: ${patient.glucose} mg%
-- BMI: ${patient.bmi}
+उंची (Height): ${patient.height} cm
+वजन (Weight): ${patient.weight} kg
+बी.एम.आय. (BMI - Weight/Height²): ${patient.bmi}
+रक्तदाब (Blood Pressure): ${patient.bp}
+रक्तशर्करा (Blood Glucose): ${patient.glucose} mg%
 
-REMARK / सल्ला:
-${patient.remark}
+निष्कर्ष (Remarks): ${patient.remark}
 
 ${slogan}
------------------------
     `.trim();
 
     try {
-      await Share.share({
-        title: `Report: ${patient.name}`,
-        text: reportText,
-        dialogTitle: 'Share Patient Info',
-      });
+      const canShare = Capacitor.isNativePlatform() || (navigator && typeof navigator.share === 'function');
+      if (canShare) {
+        await Share.share({ title: `अहवाल (Report): ${patient.name}`, text: reportText });
+      } else {
+        await navigator.clipboard.writeText(reportText);
+        alert("Report text copied to clipboard.");
+      }
     } catch (err) {
-      console.error("Share failed", err);
+      console.error("Text share failed:", err);
     }
   };
 
   return (
-    <div className="bg-white min-h-full flex flex-col">
-      {/* Header (Hidden during print) */}
-      <div className="p-4 bg-white border-b flex flex-col gap-3 print:hidden sticky top-0 z-10 shadow-sm">
-        <div className="flex justify-between items-center">
-          <button 
-            onClick={onClose}
-            className="text-gray-600 font-bold flex items-center gap-1 text-sm bg-gray-100 px-3 py-2 rounded-lg"
+    <div className="bg-gray-100 min-h-screen flex flex-col relative font-sans">
+      {/* Header Buttons */}
+      <div className="p-4 bg-white border-b flex justify-between items-center sticky top-0 z-10 no-print shadow-sm">
+        <button
+          onClick={onClose}
+          className="text-gray-600 font-bold flex items-center gap-1 text-sm bg-gray-100 px-4 py-2 rounded-xl active:scale-95"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+          Back
+        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleShareText}
+            className="bg-green-600 text-white px-4 py-2 rounded-xl font-black text-xs shadow-lg active:scale-95 flex items-center gap-2"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
-            Back
+            SHARE TEXT
           </button>
-          <div className="flex gap-2">
-            <button 
-              onClick={handleShare}
-              className="bg-green-600 text-white px-4 py-2 rounded-xl font-black text-xs shadow-lg active:scale-95 flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-              SHARE TEXT
-            </button>
-            <button 
-              onClick={handlePrint}
-              className="bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-xs shadow-lg active:scale-95 flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-              PRINT / PDF
-            </button>
-          </div>
-        </div>
-        <div className="bg-blue-50 p-2 rounded-lg border border-blue-100">
-           <p className="text-[10px] text-center text-blue-700 font-bold leading-tight">
-             Tap <strong>PRINT / PDF</strong> then choose <strong>"Print"</strong> or <strong>"Save as PDF"</strong> from the Android menu.
-           </p>
+          <button
+            onClick={() => setShowOptions(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-xs shadow-lg active:scale-95 flex items-center gap-2"
+          >
+            PRINT / PDF
+          </button>
         </div>
       </div>
 
-      {/* Visual Preview */}
-      <div className="flex-1 p-4 md:p-10 bg-gray-50 overflow-auto">
-        <div className="max-w-md mx-auto border-2 border-gray-900 p-6 rounded-xl relative bg-white shadow-2xl">
-          <div className="absolute top-4 right-4 text-[10px] font-black bg-black text-white px-2 py-1 rounded">
-             SR: {patient.serial}
-          </div>
-          
-          <div className="text-center border-b-2 border-gray-900 pb-4 mb-6 mt-4">
-            <h1 className="text-xl font-black uppercase text-gray-900 leading-tight">Camp Diagnostic Card</h1>
-            <p className="text-xs font-bold text-gray-500 mt-1 uppercase tracking-widest">
-              {camp.name}
+      {/* Main Print Area Container */}
+      <div className="flex-1 bg-gray-100 overflow-auto flex items-center justify-center">
+        <div
+          ref={reportRef}
+          className="print-area w-full mx-auto my-1 bg-white px-2 py-2 shadow-2xl border-[3px] border-gray-400 rounded-xl text-gray-900"
+          style={{
+            fontFamily: "'Noto Sans Devanagari', sans-serif",
+            maxWidth: 680 // Limit PDF content width to max 680px
+          }}
+        >
+          {/* Main Title */}
+          <h1 className="text-3xl font-black text-center mb-2 text-black">स्वयम् आरोग्य (आरोग्य शिबिर)</h1>
+          <div className="border-b-4 border-black mb-2"></div>
+          {/* Camp Details Table */}
+          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+            <tbody>
+              <tr>
+                <td
+                  className="border-b border-l border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight"
+                  style={{ lineHeight: "1.1" }}
+                >
+                 Organization Name<br />
+                 (संस्थेचे नाव):
+                </td>
+                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{camp.organizationName}</td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>शिबिर क्रमांक<br />
+                (Camp Number):</td>
+                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{camp.serial}</td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>शिबिराचे ठिकाण<br />
+                  (Camp location):</td>
+                <td className="border-b border-r border-black p-1.5 font-medium uppercase leading-tight" style={{ lineHeight: "1.1" }}>{camp.name}</td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>दिनांक (Date):</td>
+                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
+                  {new Date(camp.date).toLocaleDateString('en-GB')}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Personal Details Table */}
+          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+            <tbody>
+              <tr>
+                <td className="border-b border-l border-t border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>नोंदणी क्रमांक<br />
+                (Serial Number):</td>
+                <td className="border-b border-r border-t border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.serial}</td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>नाव (Name):</td>
+                <td className="border-b border-r border-black p-1.5 font-bold text-base uppercase leading-tight" style={{ lineHeight: "1.1" }}>{patient.name}</td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>लिंग (Gender):</td>
+                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.gender === 'Male' ? 'पुरुष' : 'महिला'}</td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>वय (Age):</td>
+                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.age} वर्ष</td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>मोबाईल क्र.<br />
+                  (Mobile Number):</td>
+                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.phone}</td>
+              </tr>
+              {Array.isArray(patient.previousIllness) && patient.previousIllness[0] !== 'None' && (
+                <tr>
+                  <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>पूर्वीचे आजार<br />
+                    (Previous Illness):</td>
+                  <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
+                     {Array.isArray(patient.previousIllness)
+                       ? patient.previousIllness.slice(0, 2).map((illness) => {
+                           if (illness === "Diabetes") return "मधुमेह";
+                           if (illness === "Hypertension") return "रक्तदाब";
+                           return illness;
+                         }).join(', ')
+                       : (
+                         patient.previousIllness === "Diabetes"
+                           ? "मधुमेह"
+                           : patient.previousIllness === "Hypertension"
+                             ? "रक्तदाब"
+                             : patient.previousIllness
+                       )
+                     }
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          {/* Health Metrics Table */}
+          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+            <tbody>
+              <tr>
+                <td className="border-b border-l border-t border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>उंची (Height):</td>
+                <td className="border-b border-r border-t border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.height} cm</td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>वजन (Weight):</td>
+                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
+                  {patient.weight} kg <span className="text-gray-600 text-xs" style={{ lineHeight: "1.1" }}>(योग्य वजन: {patient.idealWeight} kg)</span>
+                </td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>बी.एम.आय.<br />
+                  (BMI - Weight/Height²):</td>
+                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
+                  {patient.bmi} <span className="text-gray-600 text-xs" style={{ lineHeight: "1.1" }}>(18.5–25)</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+            <tbody>
+              <tr>
+                <td className="border-b border-l border-t border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>रक्तदाब (Blood Pressure):</td>
+                <td className="border-b border-r border-t border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
+                  {patient.bp} <span className="text-gray-500 font-medium text-xs ml-2" style={{ lineHeight: "1.1" }}>(&lt;140/90 mm of Hg)</span>
+                </td>
+              </tr>
+              <tr>
+                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>रक्तशर्करा (Blood Glucose):</td>
+                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
+                  {patient.glucose} <span className="text-gray-500 font-medium text-xs ml-2" style={{ lineHeight: "1.1" }}>(&lt;140 mg%)</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Remarks Table */}
+          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+            <tbody>
+              <tr>
+                <td className="border-l border-t border-b border-black p-1.5 font-bold bg-gray-50 w-1/3 align-top leading-tight" style={{ lineHeight: "1.1" }}>निष्कर्ष (Remarks):</td>
+                <td className="border-t border-b border-r border-black p-1.5 font-bold text-gray-800 italic leading-snug" style={{ lineHeight: "1.2" }}>
+                  {patient.remark}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Footer Notes */}
+          <div className="text-left mb-3 px-3" style={{ lineHeight: "1.5" }}>
+            <p className="text-xs font-black text-black leading-tight" style={{ lineHeight: "1.5" }}>
+              टिप: वरील माहिती तुमच्या नेहमीच्या डॉक्टरना दाखवुन त्यांचा सल्ला घेणे.<br />
+              Note: Consult your regular doctor with this report.
             </p>
           </div>
 
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="block text-[8px] font-black text-gray-400 uppercase tracking-widest">Patient Name</span>
-                <span className="font-bold text-sm text-gray-900 block truncate">{patient.name}</span>
-              </div>
-              <div className="text-right">
-                <span className="block text-[8px] font-black text-gray-400 uppercase tracking-widest">Phone</span>
-                <span className="font-bold text-sm text-gray-900 block">{patient.phone}</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-gray-50 p-2 rounded text-center border">
-                <span className="block text-[7px] font-black text-gray-400 uppercase">Age/Sex</span>
-                <span className="font-bold text-xs">{patient.age} / {patient.gender.charAt(0)}</span>
-              </div>
-              <div className="bg-gray-50 p-2 rounded text-center border">
-                <span className="block text-[7px] font-black text-gray-400 uppercase">Height</span>
-                <span className="font-bold text-xs">{patient.height}cm</span>
-              </div>
-              <div className="bg-gray-50 p-2 rounded text-center border">
-                <span className="block text-[7px] font-black text-gray-400 uppercase">Weight</span>
-                <span className="font-bold text-xs">{patient.weight}kg</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-               <div className="border-2 border-blue-600 p-3 rounded-xl text-center">
-                  <span className="block text-[8px] font-black text-blue-600 uppercase mb-1">Blood Pressure</span>
-                  <span className="text-lg font-black text-gray-900">{patient.bp}</span>
-               </div>
-               <div className="border-2 border-orange-600 p-3 rounded-xl text-center">
-                  <span className="block text-[8px] font-black text-orange-600 uppercase mb-1">Glucose</span>
-                  <span className="text-lg font-black text-gray-900">{patient.glucose}</span>
-               </div>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-               <span className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Doctor's Remark</span>
-               <p className="text-xs font-bold leading-relaxed text-gray-800 italic">
-                  "{patient.remark}"
-               </p>
-            </div>
-
-            <div className="pt-6 flex justify-between items-end">
-              <div className="text-[7px] text-gray-400 font-bold uppercase">
-                ID: {patient.id.substring(0,8)}
-              </div>
-              <div className="text-center flex flex-col items-center">
-                <span className="text-[8px] font-black uppercase mb-1">Medical Officer</span>
-                <div className="w-24 border-t border-gray-900"></div>
-              </div>
-            </div>
-
-            {/* Slogan moved to bottom, black, bold, and 2px smaller (from 11px to 9px) */}
-            <div className="text-center pt-2 border-t border-dashed border-gray-300">
-              <p className="text-[9px] font-black text-black leading-tight">
-                {slogan}
-              </p>
-            </div>
+          <div className="text-center py-4 border-t border-black" style={{ lineHeight: "1.5" }}>
+            <p className="text-xs font-black text-black leading-tight" style={{ lineHeight: "1.5" }}>
+              {slogan}
+            </p>
           </div>
         </div>
       </div>
+
+      {/* Choice Modal */}
+      {showOptions && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[200] p-6 no-print">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in duration-200">
+            <div className="p-6 text-center border-b bg-gray-50">
+              <h3 className="text-lg font-black text-gray-900">Select Action</h3>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Choose output method</p>
+            </div>
+            <div className="p-4 grid grid-cols-1 gap-3">
+              <button
+                onClick={handlePrintAction}
+                className="flex items-center gap-4 p-4 bg-blue-50 text-blue-700 rounded-2xl active:scale-95 transition-all border-2 border-blue-100"
+              >
+                <div className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                </div>
+                <div className="text-left">
+                  <span className="block font-black text-sm uppercase">Print Report (अहवाल)</span>
+                  <span className="text-[10px] font-bold opacity-70">Android Print System</span>
+                </div>
+              </button>
+
+              <button
+                onClick={handleSaveAsPDF}
+                className="flex items-center gap-4 p-4 bg-orange-50 text-orange-700 rounded-2xl active:scale-95 transition-all border-2 border-orange-100"
+              >
+                <div className="w-12 h-12 bg-orange-600 text-white rounded-xl flex items-center justify-center shadow-lg">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                </div>
+                <div className="text-left">
+                  <span className="block font-black text-sm uppercase">Save as PDF</span>
+                  <span className="text-[10px] font-bold opacity-70">Download Document</span>
+                </div>
+              </button>
+
+              <button onClick={() => setShowOptions(false)} className="mt-2 w-full py-3 text-gray-400 font-bold text-xs uppercase tracking-widest">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Processing Loader */}
+      {isProcessing && (
+        <div className="fixed inset-0 bg-white/95 flex flex-col items-center justify-center z-[300] no-print">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="font-black text-blue-600 uppercase tracking-[0.2em] text-xs">{loadingText}</p>
+        </div>
+      )}
     </div>
   );
 };

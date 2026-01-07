@@ -7,7 +7,7 @@ export const calculateBMI = (weight: number, heightCm: number): number => {
 export const calculateIdealWeight = (heightCm: number, gender: 'Male' | 'Female' | 'Other' = 'Male'): number => {
   if (!heightCm || heightCm <= 0) return 0;
 
-  // Hamwi Formula (Metric implementation)
+  // Hamwi Formula (Metric implementation) <140
   // Base height: 152.4 cm (5 feet)
   // Male: 48.0 kg + 2.7 kg per inch (2.54 cm) over 5ft
   // Female: 45.5 kg + 2.2 kg per inch (2.54 cm) over 5ft
@@ -51,8 +51,8 @@ export const generateRemark = (
   
   const isHighBP = sys > 140 || dia > 90;
   const isLowBP = sys < 140 && dia < 90;
-  const isHighGluc = glucose > 150;
-  const isLowGluc = glucose < 150;
+  const isHighGluc = glucose > 140;
+  const isLowGluc = glucose < 140;
 
   const illnessList = Array.isArray(illness) ? illness : [illness];
   

@@ -31,7 +31,7 @@ const PatientInformation: React.FC<PatientInformationProps> = ({ camp, patientTo
     gender: 'Male',
     age: 18,
     phone: '',
-    addiction: 'None',
+    addiction: ['None'],
     previousIllness: ['None'],
     height: 0,
     weight: 0,
@@ -152,14 +152,25 @@ const PatientInformation: React.FC<PatientInformationProps> = ({ camp, patientTo
           </div>
 
           <div className="flex flex-col">
-            <label className="text-xs font-bold text-gray-500 uppercase mb-1">Addiction</label>
+            <label className="text-xs font-bold text-gray-500 uppercase mb-1">Addiction (Multi-select)</label>
             <select 
-              value={formData.addiction}
-              onChange={(e) => updateField('addiction', e.target.value)}
-              className="border p-4 rounded-lg bg-white text-base"
+              multiple
+              value={Array.isArray(formData.addiction) ? formData.addiction : [formData.addiction || 'None']}
+              onChange={(e) => {
+                const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                let finalSelection = selected;
+                if (selected.length > 1 && selected.includes('None')) {
+                    finalSelection = selected.filter(s => s !== 'None');
+                } else if (selected.length === 0) {
+                    finalSelection = ['None'];
+                }
+                updateField('addiction', finalSelection);
+              }}
+              className="border p-4 rounded-lg bg-white text-base min-h-[120px]"
             >
               {ADDICTIONS.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
+            <p className="text-[9px] text-gray-400 mt-1 font-bold italic">Long press or hold Ctrl to select multiple.</p>
           </div>
 
           <div className="flex flex-col">
@@ -177,11 +188,11 @@ const PatientInformation: React.FC<PatientInformationProps> = ({ camp, patientTo
                 }
                 updateField('previousIllness', finalSelection);
               }}
-              className="border p-4 rounded-lg bg-white text-base min-h-[140px]"
+              className="border p-4 rounded-lg bg-white text-base min-h-[120px]"
             >
               {ILLNESSES.map(i => <option key={i} value={i}>{i}</option>)}
             </select>
-            <p className="text-[9px] text-gray-400 mt-1 font-bold italic">Hold Ctrl/Cmd or long press to select multiple.</p>
+            <p className="text-[9px] text-gray-400 mt-1 font-bold italic">Long press or hold Ctrl to select multiple.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -223,7 +234,7 @@ const PatientInformation: React.FC<PatientInformationProps> = ({ camp, patientTo
             <div className="flex flex-col">
               <label className="text-xs font-bold text-gray-500 uppercase mb-1">BP (mm of HG)</label>
               <input 
-                type="text" placeholder="120/90" required
+                type="text" placeholder="120/80" required
                 value={formData.bp}
                 onChange={(e) => updateField('bp', e.target.value)}
                 className="border p-4 rounded-lg text-base"

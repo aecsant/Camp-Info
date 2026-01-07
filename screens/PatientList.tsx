@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camp, Patient } from '../types';
 import { getPatients, deletePatient } from '../db';
-
+ 
 interface PatientListProps {
   camp: Camp;
   onAddPatient: () => void;
@@ -87,7 +87,7 @@ const PatientList: React.FC<PatientListProps> = ({ camp, onAddPatient, onEditPat
                     <h4 className="font-bold text-gray-900 truncate text-sm">{p.name}</h4>
                   </div>
                   <div className="text-[11px] text-gray-500 flex flex-wrap gap-x-2">
-                    <span>{p.gender}, {p.age}y</span>
+                    <span>{p.gender==='Male' ? 'पुरुष' : 'महिला'}, {p.age}वर्ष</span>
                     <span>•</span>
                     <span>{p.phone}</span>
                   </div>

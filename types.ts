@@ -3,6 +3,7 @@ export interface Camp {
   serial: number;
   name: string;
   date: string;
+  organizationName: string;
 }
 
 export interface Patient {
@@ -13,7 +14,7 @@ export interface Patient {
   gender: 'Male' | 'Female' | 'Other';
   age: number;
   phone: string;
-  addiction: string;
+  addiction: string[];
   previousIllness: string | string[];
   height: number;
   idealWeight: number;
