@@ -215,7 +215,7 @@ ${slogan}
       <div className="p-4 bg-white border-b flex justify-between items-center sticky top-0 z-10 no-print shadow-sm">
         <button
           onClick={onClose}
-          className="text-gray-600 font-bold flex items-center gap-1 text-sm bg-gray-100 px-4 py-2 rounded-xl active:scale-95"
+          className="text-gray-900 font-bold flex items-center gap-1 text-sm bg-gray-100 px-4 py-2 rounded-xl active:scale-95"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
           Back
@@ -240,41 +240,116 @@ ${slogan}
       <div className="flex-1 bg-gray-100 overflow-auto flex items-center justify-center">
         <div
           ref={reportRef}
-          className="print-area w-full mx-auto my-1 bg-white px-2 py-2 shadow-2xl border-[3px] border-gray-400 rounded-xl text-gray-900"
+          className="print-area w-full mx-auto my-1 bg-white px-2 py-2   text-gray-900"
           style={{
             fontFamily: "'Noto Sans Devanagari', sans-serif",
             maxWidth: 680 // Limit PDF content width to max 680px
           }}
         >
           {/* Main Title */}
-          <h1 className="text-3xl font-black text-center mb-2 text-black">स्वयम् आरोग्य (आरोग्य शिबिर)</h1>
-          <div className="border-b-4 border-black mb-2"></div>
+          <h1 className="text-3xl font-black text-center mb-2 text-black">स्वयम् आरोग्य<br/> 
+          (आरोग्य शिबिर)</h1>
+          <div
+            className="mb-2"
+            style={{
+              borderWidth: "2.0px",
+              borderStyle: "solid",
+              borderColor: "#cccccc",
+              borderBottomWidth: "4px",
+            }}
+          ></div>
           {/* Camp Details Table */}
-          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+          <table
+            className="w-full border-collapse mb-2 border-black leading-tight"
+            style={{
+              borderWidth: "2.0px",
+              borderStyle: "solid",
+              borderColor: "#cccccc",
+            }}
+          >
             <tbody>
               <tr>
                 <td
-                  className="border-b border-l border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight"
-                  style={{ lineHeight: "1.1" }}
+                  className="p-1.5 font-bold bg-gray-50 w-1/3 leading-tight"
+                  style={{
+                    lineHeight: "1.1",
+                    borderRight: "none",
+                    borderBottom: "none",
+                  }}
                 >
-                 Organization Name<br />
-                 (संस्थेचे नाव):
+                  Organization Name<br />
+                  (संस्थेचे नाव):
                 </td>
-                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{camp.organizationName}</td>
+                <td
+                  className="p-1.5 font-medium leading-tight"
+                  style={{
+                    lineHeight: "1.1",
+                    borderBottom: "none",
+                  }}
+                >
+                  {camp.organizationName}
+                </td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>शिबिर क्रमांक<br />
-                (Camp Number):</td>
-                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{camp.serial}</td>
+                <td
+                  className="p-1.5 font-bold bg-gray-50 w-1/3 leading-tight"
+                  style={{
+                    lineHeight: "1.1",
+                    borderRight: "none",
+                    borderBottom: "none",
+                  }}
+                >
+                  शिबिर क्रमांक<br />
+                  (Camp Number):
+                </td>
+                <td
+                  className="p-1.5 font-medium leading-tight"
+                  style={{
+                    lineHeight: "1.1",
+                    borderBottom: "none",
+                  }}
+                >
+                  {camp.serial}
+                </td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>शिबिराचे ठिकाण<br />
-                  (Camp location):</td>
-                <td className="border-b border-r border-black p-1.5 font-medium uppercase leading-tight" style={{ lineHeight: "1.1" }}>{camp.name}</td>
+                <td
+                  className="p-1.5 font-bold bg-gray-50 leading-tight"
+                  style={{
+                    lineHeight: "1.1",
+                    borderRight: "none",
+                    borderBottom: "none",
+                  }}
+                >
+                  शिबिराचे ठिकाण<br />
+                  (Camp location):
+                </td>
+                <td
+                  className="p-1.5 font-medium uppercase leading-tight"
+                  style={{
+                    lineHeight: "1.1",
+                    borderBottom: "none",
+                  }}
+                >
+                  {camp.name}
+                </td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>दिनांक (Date):</td>
-                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
+                <td
+                  className="p-1.5 font-bold bg-gray-50 leading-tight"
+                  style={{
+                    lineHeight: "1.1",
+                    borderRight: "none",
+                  }}
+                >
+                  दिनांक (Date):
+                </td>
+                <td
+                  className="p-1.5 font-medium leading-tight"
+                  style={{
+                    lineHeight: "1.1",
+                  }}
+                >
                   {new Date(camp.date).toLocaleDateString('en-GB')}
                 </td>
               </tr>
@@ -282,35 +357,41 @@ ${slogan}
           </table>
 
           {/* Personal Details Table */}
-          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+          <table className="w-full border-collapse mb-2 mt-4 border-black leading-tight"
+            style={{
+              borderWidth: "2.0px",
+              borderStyle: "solid",
+              borderColor: "#cccccc",
+            }}
+          >
             <tbody>
               <tr>
-                <td className="border-b border-l border-t border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>नोंदणी क्रमांक<br />
+                <td className="  p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>नोंदणी क्रमांक<br />
                 (Serial Number):</td>
-                <td className="border-b border-r border-t border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.serial}</td>
+                <td className="  p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>{patient.serial}</td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>नाव (Name):</td>
-                <td className="border-b border-r border-black p-1.5 font-bold text-base uppercase leading-tight" style={{ lineHeight: "1.1" }}>{patient.name}</td>
+                <td className="  p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>नाव (Name):</td>
+                <td className=" p-1.5 font-bold text-base uppercase leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>{patient.name}</td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>लिंग (Gender):</td>
-                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.gender === 'Male' ? 'पुरुष' : 'महिला'}</td>
+                <td className="  p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>लिंग (Gender):</td>
+                <td className=" p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>{patient.gender === 'Male' ? 'पुरुष' : 'महिला'}</td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>वय (Age):</td>
-                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.age} वर्ष</td>
+                <td className="  p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>वय (Age):</td>
+                <td className="  p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>{patient.age} वर्ष</td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>मोबाईल क्र.<br />
+                <td className=" p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>मोबाईल क्र.<br />
                   (Mobile Number):</td>
-                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.phone}</td>
+                <td className="  p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>{patient.phone}</td>
               </tr>
               {Array.isArray(patient.previousIllness) && patient.previousIllness[0] !== 'None' && (
                 <tr>
-                  <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>पूर्वीचे आजार<br />
+                  <td className=" p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>पूर्वीचे आजार<br />
                     (Previous Illness):</td>
-                  <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
+                  <td className="  p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>
                      {Array.isArray(patient.previousIllness)
                        ? patient.previousIllness.slice(0, 2).map((illness) => {
                            if (illness === "Diabetes") return "मधुमेह";
@@ -332,51 +413,74 @@ ${slogan}
           </table>
 
           {/* Health Metrics Table */}
-          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+          <table className="w-full border-collapse mb-2 mt-4 border-black leading-tight"
+            style={{
+              borderWidth: "2.0px",
+              borderStyle: "solid",
+              borderColor: "#cccccc",
+            }}
+          >
             <tbody>
               <tr>
-                <td className="border-b border-l border-t border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>उंची (Height):</td>
-                <td className="border-b border-r border-t border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>{patient.height} cm</td>
+                <td className="  p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>उंची (Height):</td>
+                <td className="  p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>{patient.height} cm</td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>वजन (Weight):</td>
-                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
-                  {patient.weight} kg <span className="text-gray-600 text-xs" style={{ lineHeight: "1.1" }}>(योग्य वजन: {patient.idealWeight} kg)</span>
+                <td className=" p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>वजन (Weight):</td>
+                <td className=" p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>
+                  {patient.weight} kg <span className="text-gray-900 text-xs" style={{ lineHeight: "1.1" }}>(योग्य वजन: {patient.idealWeight} kg)</span>
                 </td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1" }}>बी.एम.आय.<br />
+                <td className=" p-1.5 font-bold bg-gray-50 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>बी.एम.आय.<br />
                   (BMI - Weight/Height²):</td>
-                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
-                  {patient.bmi} <span className="text-gray-600 text-xs" style={{ lineHeight: "1.1" }}>(18.5–25)</span>
+                <td className="  p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>
+                  {patient.bmi} <span className="text-gray-900 text-xs" style={{ lineHeight: "1.1" }}>(18.5–25)</span>
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+          <table className="w-full border-collapse mb-2 mt-4 border-black leading-tight"
+            style={{
+              borderWidth: "2.0px",
+              borderStyle: "solid",
+              borderColor: "#cccccc",
+            }}
+          >
             <tbody>
               <tr>
-                <td className="border-b border-l border-t border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>रक्तदाब (Blood Pressure):</td>
-                <td className="border-b border-r border-t border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
-                  {patient.bp} <span className="text-gray-500 font-medium text-xs ml-2" style={{ lineHeight: "1.1" }}>(&lt;140/90 mm of Hg)</span>
+                <td className="  p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>रक्तदाब (Blood Pressure):</td>
+                <td className="  p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>
+                  {patient.bp} <span className="text-gray-900 font-medium text-xs ml-2" style={{ lineHeight: "1.1" }}>(&lt;140/90 mm of Hg)</span>
                 </td>
               </tr>
               <tr>
-                <td className="border-b border-l border-black p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1" }}>रक्तशर्करा (Blood Glucose):</td>
-                <td className="border-b border-r border-black p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1" }}>
-                  {patient.glucose} <span className="text-gray-500 font-medium text-xs ml-2" style={{ lineHeight: "1.1" }}>(&lt;140 mg%)</span>
+                <td className="  p-1.5 font-bold bg-gray-50 w-1/3 leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>रक्तशर्करा (Blood Glucose):</td>
+                <td className=" p-1.5 font-medium leading-tight" style={{ lineHeight: "1.1", borderBottom: "none" }}>
+                  {patient.glucose} <span className="text-gray-900 font-medium text-xs ml-2" style={{ lineHeight: "1.1" }}>(&lt;140 mg%)</span>
                 </td>
               </tr>
             </tbody>
           </table>
 
           {/* Remarks Table */}
-          <table className="w-full border-collapse mb-2 border-4 border-black leading-tight">
+          <table className="w-full border-collapse mb-2 mt-4 border-black leading-tight"
+            style={{
+              borderWidth: "2.0px",
+              borderStyle: "solid",
+              borderColor: "#cccccc",
+            }}
+          >
             <tbody>
-              <tr>
-                <td className="border-l border-t border-b border-black p-1.5 font-bold bg-gray-50 w-1/3 align-top leading-tight" style={{ lineHeight: "1.1" }}>निष्कर्ष (Remarks):</td>
-                <td className="border-t border-b border-r border-black p-1.5 font-bold text-gray-800 italic leading-snug" style={{ lineHeight: "1.2" }}>
+              <tr style={{ height: "6.5em", minHeight: "6.5em" }}>
+                <td className="p-1.5 font-bold bg-gray-50 w-1/3 align-top leading-tight" style={{ lineHeight: "1.1", borderRight: "none", borderBottom: "none" }}>
+                  निष्कर्ष (Remarks):
+                </td>
+                <td
+                  className="p-1.5 font-bold text-gray-800 italic leading-snug align-top"
+                  style={{ lineHeight: "1.1", verticalAlign: "top", borderBottom: "none" }}
+                >
                   {patient.remark}
                 </td>
               </tr>
@@ -385,14 +489,32 @@ ${slogan}
 
           {/* Footer Notes */}
           <div className="text-left mb-3 px-3" style={{ lineHeight: "1.5" }}>
-            <p className="text-xs font-black text-black leading-tight" style={{ lineHeight: "1.5" }}>
+            <p
+              className="text-xs font-black text-gray-900 leading-tight"
+              style={{
+                lineHeight: "1.5",
+                fontFamily: "Noto Sans Devanagari, 'Marathi', 'Devanagari', sans-serif",
+              }}
+            >
               टिप: वरील माहिती तुमच्या नेहमीच्या डॉक्टरना दाखवुन त्यांचा सल्ला घेणे.<br />
-              Note: Consult your regular doctor with this report.
+              <span
+                style={{
+                  fontFamily: "inherit", // use same font for continuity
+                }}
+              >
+                Note: Consult your regular doctor with this report.
+              </span>
             </p>
           </div>
 
-          <div className="text-center py-4 border-t border-black" style={{ lineHeight: "1.5" }}>
-            <p className="text-xs font-black text-black leading-tight" style={{ lineHeight: "1.5" }}>
+          <div className="text-center py-4 border-t border-black" style={{ lineHeight: "2.5" }}>
+            <p
+              className="text-lg font-black text-gray-900 leading-tight tracking-wide"
+              style={{
+                lineHeight: "2.5",
+                fontFamily: "inherit", // Ensure Marathi font preserved in print
+              }}
+            >
               {slogan}
             </p>
           </div>
@@ -405,7 +527,7 @@ ${slogan}
           <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in duration-200">
             <div className="p-6 text-center border-b bg-gray-50">
               <h3 className="text-lg font-black text-gray-900">Select Action</h3>
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Choose output method</p>
+              <p className="text-xs text-gray-900 font-bold uppercase tracking-widest mt-1">Choose output method</p>
             </div>
             <div className="p-4 grid grid-cols-1 gap-3">
               <button

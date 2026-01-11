@@ -52,31 +52,44 @@ const CampRegistration: React.FC<CampRegistrationProps> = ({ onSelectCamp }) => 
       return s.includes('hypertension') || s.includes('cvd') || s.includes('cardiovascular') || s.includes('blood pressure');
     };
 
-    const isNewDM = (p: Patient) => !isKnownDM(p) && (Number(p.glucose) >= 160);
-    const isNewHTN = (p: Patient) => {
+    // Screening thresholds for newly detected
+    const isNewHighSugar = (p: Patient) => !isKnownDM(p) && (Number(p.glucose) > 140);
+    const isNewHighBP = (p: Patient) => {
       if (isKnownHTN(p)) return false;
       const [sys, dia] = (p.bp || '0/0').split('/').map(n => parseInt(n) || 0);
       return sys >= 140 || dia >= 90;
     };
 
-    const patientsCount = patients.length;
     const kcoDM = patients.filter(isKnownDM).length;
     const kcoHTN = patients.filter(isKnownHTN).length;
-    const newDM = patients.filter(isNewDM).length;
-    const newHTN = patients.filter(isNewHTN).length;
+    const newHighSugar = patients.filter(isNewHighSugar).length;
+    const newHighBP = patients.filter(isNewHighBP).length;
+
+    // Blood Sugar Categories (Analysis only)
+    const sugarNormal = patients.filter(p => Number(p.glucose) <= 140).length;
+    const sugarPre = patients.filter(p => Number(p.glucose) > 140 && Number(p.glucose) <= 200).length;
+    const sugarHigh = patients.filter(p => Number(p.glucose) > 200).length;
 
     return {
-      total: patientsCount,
+      total: patients.length,
       males: patients.filter(p => p.gender === 'Male').length,
       females: patients.filter(p => p.gender === 'Female').length,
-      kcoDM, kcoHTN, newDM, newHTN,
-      totalDM: kcoDM + newDM,
-      totalHTN: kcoHTN + newHTN,
-      maleTotalDM: patients.filter(p => p.gender === 'Male' && (isKnownDM(p) || isNewDM(p))).length,
-      femaleTotalDM: patients.filter(p => p.gender === 'Female' && (isKnownDM(p) || isNewDM(p))).length,
-      maleTotalHTN: patients.filter(p => p.gender === 'Male' && (isKnownHTN(p) || isNewHTN(p))).length,
-      femaleTotalHTN: patients.filter(p => p.gender === 'Female' && (isKnownHTN(p) || isNewHTN(p))).length,
-      combined: patients.filter(p => isKnownDM(p) || isNewDM(p) || isKnownHTN(p) || isNewHTN(p)).length
+      kcoDM,
+      kcoHTN,
+      newHighSugar, // Labelled as High Blood Sugar
+      newHighBP,    // Labelled as High Blood Pressure
+      sugarNormal,
+      sugarPre,
+      sugarHigh,
+      totalSugarAbnormal: patients.filter(p => Number(p.glucose) > 140).length,
+      totalBPAbnormal: patients.filter(p => {
+        const [sys, dia] = (p.bp || '0/0').split('/').map(n => parseInt(n) || 0);
+        return sys >= 140 || dia >= 90;
+      }).length,
+      combined: patients.filter(p => {
+        const [sys, dia] = (p.bp || '0/0').split('/').map(n => parseInt(n) || 0);
+        return (Number(p.glucose) > 140) || (sys >= 140 || dia >= 90) || isKnownDM(p) || isKnownHTN(p);
+      }).length
     };
   };
 
@@ -195,6 +208,11 @@ const CampRegistration: React.FC<CampRegistrationProps> = ({ onSelectCamp }) => 
     await exportToCSV(camp, patients);
   };
 
+  const formatDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  };
+
   return (
     <div className="flex flex-col h-full gap-6">
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 no-print">
@@ -296,33 +314,119 @@ const CampRegistration: React.FC<CampRegistrationProps> = ({ onSelectCamp }) => 
         <div className="fixed inset-0 pointer-events-none opacity-0 overflow-hidden h-0 w-0">
           <div
             ref={analysisRef}
-            className="bg-white p-16 w-[800px] text-black"
+            className="bg-white p-12 w-[800px] text-black"
             style={{
               fontFamily: "'Noto Sans Devanagari', sans-serif"
             }}
           >
-            <h1 className="text-4xl font-black text-center mb-2">शिबिर विश्लेषण (Report)</h1>
-            <div className="border-b-8 border-black mb-12"></div>
-            <table className="w-full text-3xl border-collapse">
-              <tbody className="divide-y-2 divide-gray-300">
-                <tr><td className="py-4">No. of patient:</td><td className="text-right font-black">{analysisData.stats.total}</td></tr>
-                <tr><td className="py-4">Male:</td><td className="text-right font-black">{analysisData.stats.males}</td></tr>
-                <tr><td className="py-4">Female:</td><td className="text-right font-black">{analysisData.stats.females}</td></tr>
-                <tr className="border-none"><td className="h-10" colSpan={2}></td></tr>
-                <tr><td className="py-4">k|c|o DM:</td><td className="text-right font-black">{analysisData.stats.kcoDM}</td></tr>
-                <tr><td className="py-4">k|c|o HTN:</td><td className="text-right font-black">{analysisData.stats.kcoHTN}</td></tr>
-                <tr><td className="py-4 text-red-600 font-bold">New DM:</td><td className="text-right font-black text-red-600">{analysisData.stats.newDM}</td></tr>
-                <tr><td className="py-4 text-blue-600 font-bold">New HTN:</td><td className="text-right font-black text-blue-600">{analysisData.stats.newHTN}</td></tr>
-                <tr className="border-none"><td className="h-10" colSpan={2}></td></tr>
-                <tr className="bg-gray-100"><td className="py-4 font-black">TOTAL DM:</td><td className="text-right font-black text-red-600 text-4xl">{analysisData.stats.totalDM}</td></tr>
-                <tr className="bg-gray-100"><td className="py-4 font-black">TOTAL HTN:</td><td className="text-right font-black text-blue-600 text-4xl">{analysisData.stats.totalHTN}</td></tr>
-                <tr className="bg-black text-white"><td className="p-6 font-black">TOTAL (DM+HTN):</td><td className="p-6 text-right font-black text-5xl">{analysisData.stats.combined}</td></tr>
+            <h1
+              className="text-4xl font-black text-center mb-1"
+              style={{
+                fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+              }}
+            >
+              शिबिर विश्लेषण (Report)
+            </h1>
+            <p className="text-center font-bold text-gray-600 mb-6"
+              style={{
+                fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+              }}
+            >{analysisData.camp.name} • {formatDate(analysisData.camp.date)}</p>
+            
+            <div className="border-b-4 border-black mb-6"></div>
+            
+            <h2 className="text-2xl font-black mb-4 underline"
+              style={{
+                fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+              }}
+            >१. रुग्णांची आकडेवारी (Patient Demographics)</h2>
+            <table className="w-full text-2xl border-collapse mb-8">
+              <tbody className="divide-y divide-gray-200">
+                <tr><td className="py-2"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >एकूण रुग्ण (Total patients):</td><td className="text-right font-black">{analysisData.stats.total}</td></tr>
+                <tr><td className="py-2"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >पुरुष (Male):</td><td className="text-right font-black">{analysisData.stats.males}</td></tr>
+                <tr><td className="py-2"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >महिला (Female):</td><td className="text-right font-black">{analysisData.stats.females}</td></tr>
               </tbody>
             </table>
-            <div className="mt-20 text-center text-gray-400 font-bold text-lg uppercase tracking-widest italic">
-               Camp Info • {analysisData.camp.name} • {new Date(analysisData.camp.date).toLocaleDateString('en-GB')}
+
+            <h2 className="text-2xl font-black mb-4 underline"
+              style={{
+                fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+              }}
+            >२. रक्तामधील साखर विश्लेषण (Blood Sugar Analysis)</h2>
+            <table className="w-full text-2xl border-collapse mb-8">
+              <tbody className="divide-y divide-gray-200">
+                <tr><td className="py-2"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >Normal (&lt; 140):</td><td className="text-right font-black">{analysisData.stats.sugarNormal}</td></tr>
+                <tr><td className="py-2 text-orange-600 font-bold"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >Pre-diabetic / IGT (141-200):</td><td className="text-right font-black text-orange-600">{analysisData.stats.sugarPre}</td></tr>
+                <tr><td className="py-2 text-red-600 font-bold"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >High Blood Sugar (&gt; 200):</td><td className="text-right font-black text-red-600">{analysisData.stats.sugarHigh}</td></tr>
+              </tbody>
+            </table>
+
+            <h2 className="text-2xl font-black mb-4 underline"
+              style={{
+                fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+              }}
+            >३. तपासणी अहवाल (Screening Summary)</h2>
+            <table className="w-full text-2xl border-collapse">
+              <tbody className="divide-y divide-gray-200">
+                <tr><td className="py-3"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >k/c/o Diabetes (DM):</td><td className="text-right font-black">{analysisData.stats.kcoDM}</td></tr>
+                <tr><td className="py-3"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >k/c/o Hypertension (HTN):</td><td className="text-right font-black">{analysisData.stats.kcoHTN}</td></tr>
+                <tr className="bg-orange-50"><td className="py-3 font-bold"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >High Blood Sugar (Newly Detected):</td><td className="text-right font-black text-orange-700">{analysisData.stats.newHighSugar}</td></tr>
+                <tr className="bg-blue-50"><td className="py-3 font-bold"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >High Blood Pressure (Newly Detected):</td><td className="text-right font-black text-blue-700">{analysisData.stats.newHighBP}</td></tr>
+                <tr className="bg-black text-white"><td className="p-4 font-black"
+                  style={{
+                    fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+                  }}
+                >Total (Detected + Known):</td><td className="p-4 text-right font-black text-4xl">{analysisData.stats.combined}</td></tr>
+              </tbody>
+            </table>
+
+            <div className="mt-12 text-center text-gray-400 font-bold text-base italic uppercase tracking-widest border-t pt-4"
+              style={{
+                fontFamily: "'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari', 'Marathi', 'Devanagari', sans-serif"
+              }}
+            >Camp Info • {analysisData.camp.name} • {formatDate(analysisData.camp.date)}
             </div>
-          </div>
+            </div>
         </div>
       )}
 
